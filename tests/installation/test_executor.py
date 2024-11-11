@@ -206,16 +206,18 @@ def test_execute_executes_a_batch_of_operations(
         develop=True,
     )
 
-    return_code = executor.execute([
-        Install(Package("pytest", "3.5.1")),
-        Uninstall(Package("attrs", "17.4.0")),
-        Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
-        Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.0")),
-        Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
-        Install(file_package),
-        Install(directory_package),
-        Install(git_package),
-    ])
+    return_code = executor.execute(
+        [
+            Install(Package("pytest", "3.5.1")),
+            Uninstall(Package("attrs", "17.4.0")),
+            Update(Package("requests", "2.18.3"), Package("requests", "2.18.4")),
+            Update(Package("pytest", "3.5.1"), Package("pytest", "3.5.0")),
+            Uninstall(Package("clikit", "0.2.3")).skip("Not currently installed"),
+            Install(file_package),
+            Install(directory_package),
+            Install(git_package),
+        ]
+    )
 
     expected = f"""
 Package operations: 4 installs, 2 updates, 1 removal
@@ -316,24 +318,26 @@ def test_execute_prints_warning_for_invalid_wheels(
     base_url = "https://files.pythonhosted.org/"
     wheel1 = "demo_invalid_record-0.1.0-py2.py3-none-any.whl"
     wheel2 = "demo_invalid_record2-0.1.0-py2.py3-none-any.whl"
-    return_code = executor.execute([
-        Install(
-            Package(
-                "demo-invalid-record",
-                "0.1.0",
-                source_type="url",
-                source_url=f"{base_url}/{wheel1}",
-            )
-        ),
-        Install(
-            Package(
-                "demo-invalid-record2",
-                "0.1.0",
-                source_type="url",
-                source_url=f"{base_url}/{wheel2}",
-            )
-        ),
-    ])
+    return_code = executor.execute(
+        [
+            Install(
+                Package(
+                    "demo-invalid-record",
+                    "0.1.0",
+                    source_type="url",
+                    source_url=f"{base_url}/{wheel1}",
+                )
+            ),
+            Install(
+                Package(
+                    "demo-invalid-record2",
+                    "0.1.0",
+                    source_type="url",
+                    source_url=f"{base_url}/{wheel2}",
+                )
+            ),
+        ]
+    )
 
     warning1 = f"""\
 <warning>Warning: Validation of the RECORD file of {wheel1} failed.\
@@ -426,9 +430,11 @@ def test_execute_works_with_ansi_output(
 
     executor = Executor(env, pool, config, io_decorated)
 
-    return_code = executor.execute([
-        Install(Package("cleo", "1.0.0a5")),
-    ])
+    return_code = executor.execute(
+        [
+            Install(Package("cleo", "1.0.0a5")),
+        ]
+    )
 
     # fmt: off
     expected = [
@@ -461,9 +467,11 @@ def test_execute_works_with_no_ansi_output(
 
     executor = Executor(env, pool, config, io_not_decorated)
 
-    return_code = executor.execute([
-        Install(Package("cleo", "1.0.0a5")),
-    ])
+    return_code = executor.execute(
+        [
+            Install(Package("cleo", "1.0.0a5")),
+        ]
+    )
 
     expected = """
 Package operations: 1 install, 0 updates, 0 removals
@@ -626,12 +634,14 @@ def test_executor_should_not_write_pep610_url_references_for_cached_package(
     io: BufferedIO,
 ) -> None:
     link_cached = fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl"
-    package.files = [{
-        "file": "demo-0.1.0-py2.py3-none-any.whl",
-        "hash": (
-            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
-        ),
-    }]
+    package.files = [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": (
+                "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+            ),
+        }
+    ]
 
     mocker.patch(
         "poetry.installation.executor.Executor._download", return_value=link_cached
@@ -653,12 +663,14 @@ def test_executor_should_write_pep610_url_references_for_wheel_files(
     url = (fixture_dir("distributions") / "demo-0.1.0-py2.py3-none-any.whl").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
-    package.files = [{
-        "file": "demo-0.1.0-py2.py3-none-any.whl",
-        "hash": (
-            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
-        ),
-    }]
+    package.files = [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": (
+                "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+            ),
+        }
+    ]
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
@@ -687,12 +699,14 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_files(
     url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
     package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
     # Set package.files so the executor will attempt to hash the package
-    package.files = [{
-        "file": "demo-0.1.0.tar.gz",
-        "hash": (
-            "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
-        ),
-    }]
+    package.files = [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": (
+                "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
+            ),
+        }
+    ]
 
     executor = Executor(tmp_venv, pool, config, io)
     executor.execute([Install(package)])
@@ -796,12 +810,14 @@ def test_executor_should_write_pep610_url_references_for_wheel_urls(
         source_url="https://files.pythonhosted.org/demo-0.1.0-py2.py3-none-any.whl",
     )
     # Set package.files so the executor will attempt to hash the package
-    package.files = [{
-        "file": "demo-0.1.0-py2.py3-none-any.whl",
-        "hash": (
-            "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
-        ),
-    }]
+    package.files = [
+        {
+            "file": "demo-0.1.0-py2.py3-none-any.whl",
+            "hash": (
+                "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a"
+            ),
+        }
+    ]
 
     executor = Executor(tmp_venv, pool, config, io)
     operation = Install(package)
@@ -890,12 +906,14 @@ def test_executor_should_write_pep610_url_references_for_non_wheel_urls(
         source_url="https://files.pythonhosted.org/demo-0.1.0.tar.gz",
     )
     # Set package.files so the executor will attempt to hash the package
-    package.files = [{
-        "file": "demo-0.1.0.tar.gz",
-        "hash": (
-            "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
-        ),
-    }]
+    package.files = [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": (
+                "sha256:9fa123ad707a5c6c944743bf3e11a0e80d86cb518d3cf25320866ca3ef43e2ad"
+            ),
+        }
+    ]
 
     executor = Executor(tmp_venv, pool, config, io)
     operation = Install(package)
@@ -1163,12 +1181,20 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         "poetry.factory.Factory.create_poetry", side_effect=RuntimeError
     )
 
-    config.merge({
-        "cache-dir": str(tmp_path),
-        "installer": {"modern-installation": False},
-    })
+    config.merge(
+        {
+            "cache-dir": str(tmp_path),
+            "installer": {"modern-installation": False},
+        }
+    )
 
     executor = Executor(env, pool, config, io)
+    warning_lines = io.fetch_output().splitlines()
+    assert warning_lines == [
+        "Warning: Setting `installer.modern-installation` to `false` is deprecated.",
+        "The pip-based installer will be removed in a future release.",
+        "See https://github.com/python-poetry/poetry/issues/8987.",
+    ]
 
     directory_package = Package(
         "simple-project",
@@ -1177,9 +1203,11 @@ def test_executor_fallback_on_poetry_create_error_without_wheel_installer(
         source_url=fixture_dir("simple_project").resolve().as_posix(),
     )
 
-    return_code = executor.execute([
-        Install(directory_package),
-    ])
+    return_code = executor.execute(
+        [
+            Install(directory_package),
+        ]
+    )
 
     expected = f"""
 Package operations: 1 install, 0 updates, 0 removals
@@ -1456,3 +1484,126 @@ Package operations: 1 install, 0 updates, 0 removals
     output = io.fetch_output().strip()
     assert output.startswith(expected_start)
     assert output.endswith(expected_end)
+
+
+@pytest.mark.parametrize(
+    "package_files,expected_url_reference",
+    [
+        (
+            [
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
+                },
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+                },
+                {
+                    "file": "demo-0.1.0.whl",
+                    "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+                },
+            ],
+            {
+                "archive_info": {
+                    "hashes": {
+                        "sha512": "766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad"
+                    },
+                },
+            },
+        ),
+        (
+            [
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+                }
+            ],
+            {
+                "archive_info": {
+                    "hashes": {"md5": "d1912c917363a64e127318655f7d1fe7"},
+                },
+            },
+        ),
+        (
+            [
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "sha3_512:196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728",
+                },
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "sha512:766ecf369b6bdf801f6f7bbfe23923cc9793d633a55619472cd3d5763f9154711fbf57c8b6ca74e4a82fa9bd8380af831e7b8668e68e362669fc60b1d81d79ad",
+                },
+                {
+                    "file": "demo-0.1.0.tar.gz",
+                    "hash": "md5:d1912c917363a64e127318655f7d1fe7",
+                },
+                {
+                    "file": "demo-0.1.0.whl",
+                    "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+                },
+            ],
+            {
+                "archive_info": {
+                    "hashes": {
+                        "sha3_512": "196f4af9099185054ed72ca1d4c57707da5d724df0af7c3dfcc0fd018b0e0533908e790a291600c7d196fe4411b4f5f6db45213fe6e5cd5512bf18b2e9eff728"
+                    },
+                },
+            },
+        ),
+    ],
+)
+def test_executor_known_hashes(
+    package_files: list[dict[str, str]],
+    expected_url_reference: dict[str, Any],
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    package_source_url: Path = (
+        fixture_dir("distributions") / "demo-0.1.0.tar.gz"
+    ).resolve()
+    package = Package(
+        "demo", "0.1.0", source_type="file", source_url=package_source_url.as_posix()
+    )
+    package.files = package_files
+    executor = Executor(tmp_venv, pool, config, io)
+    executor.execute([Install(package)])
+    expected_url_reference["url"] = package_source_url.as_uri()
+    verify_installed_distribution(tmp_venv, package, expected_url_reference)
+
+
+def test_executor_no_supported_hash_types(
+    tmp_venv: VirtualEnv,
+    pool: RepositoryPool,
+    config: Config,
+    io: BufferedIO,
+    fixture_dir: FixtureDirGetter,
+) -> None:
+    url = (fixture_dir("distributions") / "demo-0.1.0.tar.gz").resolve()
+    package = Package("demo", "0.1.0", source_type="file", source_url=url.as_posix())
+    # Set package.files so the executor will attempt to hash the package
+    package.files = [
+        {
+            "file": "demo-0.1.0.tar.gz",
+            "hash": "hash_blah:1234567890abcdefghijklmnopqrstyzwxyz",
+        },
+        {
+            "file": "demo-0.1.0.whl",
+            "hash": "sha256:70e704135718fffbcbf61ed1fc45933cfd86951a744b681000eaaa75da31f17a",
+        },
+    ]
+
+    executor = Executor(tmp_venv, pool, config, io)
+    return_code = executor.execute([Install(package)])
+    distributions = list(tmp_venv.site_packages.distributions(name=package.name))
+    assert len(distributions) == 0
+
+    output = io.fetch_output()
+    error = io.fetch_error()
+    assert return_code == 1, f"\noutput: {output}\nerror: {error}\n"
+    assert "No usable hash type(s) for demo" in output
+    assert "hash_blah:1234567890abcdefghijklmnopqrstyzwxyz" in output

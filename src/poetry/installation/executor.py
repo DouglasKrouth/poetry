@@ -31,6 +31,7 @@ from poetry.utils.authenticator import Authenticator
 from poetry.utils.env import EnvCommandError
 from poetry.utils.helpers import Downloader
 from poetry.utils.helpers import get_file_hash
+from poetry.utils.helpers import get_highest_priority_hash_type
 from poetry.utils.helpers import pluralize
 from poetry.utils.helpers import remove_directory
 from poetry.utils.pip import pip_install
@@ -67,6 +68,17 @@ class Executor:
         self._use_modern_installation = config.get(
             "installer.modern-installation", True
         )
+        if not self._use_modern_installation:
+            self._io.write_line(
+                "<warning>Warning: Setting `installer.modern-installation` to `false` "
+                "is deprecated.</>"
+            )
+            self._io.write_line(
+                "<warning>The pip-based installer will be removed in a future release.</>"
+            )
+            self._io.write_line(
+                "<warning>See https://github.com/python-poetry/poetry/issues/8987.</>"
+            )
 
         if parallel is None:
             parallel = config.get("installer.parallel", True)
@@ -695,15 +707,6 @@ class Executor:
                 package_poetry = Factory().create_poetry(pyproject.file.path.parent)
 
         if package_poetry is not None:
-            # Even if there is a build system specified
-            # some versions of pip (< 19.0.0) don't understand it
-            # so we need to check the version of pip to know
-            # if we can rely on the build system
-            legacy_pip = (
-                self._env.pip_version
-                < self._env.pip_version.__class__.from_parts(19, 0, 0)
-            )
-
             builder: Builder
             if package.develop and not package_poetry.package.build_script:
                 from poetry.masonry.builders.editable import EditableBuilder
@@ -715,13 +718,10 @@ class Executor:
                 builder.build()
 
                 return 0
-            elif legacy_pip or package_poetry.package.build_script:
+
+            if package_poetry.package.build_script:
                 from poetry.core.masonry.builders.sdist import SdistBuilder
 
-                # We need to rely on creating a temporary setup.py
-                # file since the version of pip does not support
-                # build-systems
-                # We also need it for non-PEP-517 packages
                 builder = SdistBuilder(package_poetry)
                 with builder.setup_py():
                     return self.pip_install(req, upgrade=True, editable=package.develop)
@@ -792,8 +792,17 @@ class Executor:
 
     @staticmethod
     def _validate_archive_hash(archive: Path, package: Package) -> str:
-        archive_hash: str = "sha256:" + get_file_hash(archive)
         known_hashes = {f["hash"] for f in package.files if f["file"] == archive.name}
+        hash_types = {t.split(":")[0] for t in known_hashes}
+        hash_type = get_highest_priority_hash_type(hash_types, archive.name)
+
+        if hash_type is None:
+            raise RuntimeError(
+                f"No usable hash type(s) for {package} from archive"
+                f" {archive.name} found (known hashes: {known_hashes!s})"
+            )
+
+        archive_hash = f"{hash_type}:{get_file_hash(archive, hash_type)}"
 
         if archive_hash not in known_hashes:
             raise RuntimeError(
@@ -857,17 +866,18 @@ class Executor:
         package = operation.package
 
         if not package.source_url or package.source_type == "legacy":
-            # Since we are installing from our own distribution cache
-            # pip will write a `direct_url.json` file pointing to the cache
-            # distribution.
-            # That's not what we want, so we remove the direct_url.json file,
-            # if it exists.
-            for (
-                direct_url_json
-            ) in self._env.site_packages.find_distribution_direct_url_json_files(
-                distribution_name=package.name, writable_only=True
-            ):
-                direct_url_json.unlink(missing_ok=True)
+            if not self._use_modern_installation:
+                # Since we are installing from our own distribution cache pip will write
+                # a `direct_url.json` file pointing to the cache distribution.
+                #
+                # That's not what we want, so we remove the direct_url.json file, if it
+                # exists.
+                for (
+                    direct_url_json
+                ) in self._env.site_packages.find_distribution_direct_url_json_files(
+                    distribution_name=package.name, writable_only=True
+                ):
+                    direct_url_json.unlink(missing_ok=True)
             return
 
         url_reference: dict[str, Any] | None = None

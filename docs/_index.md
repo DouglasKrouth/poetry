@@ -28,6 +28,7 @@ Poetry should always be installed in a dedicated virtual environment to isolate 
 It should in no case be installed in the environment of the project that is to be managed by Poetry.
 This ensures that Poetry's own dependencies will not be accidentally upgraded or uninstalled.
 (Each of the following installation methods ensures that Poetry is installed into an isolated environment.)
+In addition, the isolated virtual environment in which poetry is installed should not be activated for running poetry commands.
 {{% /warning %}}
 
 {{% note %}}
@@ -43,6 +44,14 @@ See the **advanced** installation instructions to use a preview or alternate ver
 `pipx` will manage upgrades and uninstalls when used to install Poetry.
 
 {{< steps >}}
+{{< step >}}
+**Install pipx**
+
+If `pipx` is not already installed, you can follow any of the options in the
+[official pipx installation instructions](https://pipx.pypa.io/stable/installation/).
+Any non-ancient version of `pipx` will do.
+
+{{< /step >}}
 {{< step >}}
 **Install Poetry**
 
